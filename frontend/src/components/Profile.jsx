@@ -1,164 +1,175 @@
-import React, { useState, useEffect, useContext } from 'react';
-import {
-  Container,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Box,
-  Grid,
-  Divider,
-  Alert,
-  Snackbar,
-} from '@mui/material';
+// frontend/src/components/Profile.jsx
+import React, { useState, useEffect } from 'react';
+import { Container, Typography, TextField, Button, Paper, Box } from '@mui/material';
 import api from '../services/api';
-import { AuthContext } from '../context/AuthContext';
 
 export default function Profile() {
-  const { logout } = useContext(AuthContext);
-
-  const [isEditing, setIsEditing] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [userData, setUserData] = useState({
+  const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    phone: '',
     address: '',
+    city: '',
+    postalCode: '',
+    country: '',
   });
 
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    api.get('/users/me')
-      .then(({ data }) => {
-        const [firstName, ...rest] = data.name.split(' ');
-        setUserData({
-          firstName,
-          lastName: rest.join(' '),
-          email: data.email,
-          phone: data.phone || '',
-          address: data.address || '',
+    const fetchProfile = async () => {
+      try {
+        const token = JSON.parse(localStorage.getItem('user'))?.token;
+        const { data: user } = await api.get('/users/me', {
+          headers: { Authorization: `Bearer ${token}` },
         });
-      })
-      .catch(() => setError('Failed to load profile'));
+        
+        const { data: shipping } = await api.get('/users/shipping-address', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setFormData({
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          address: shipping.address || '',
+          city: shipping.city || '',
+          postalCode: shipping.postalCode || '',
+          country: shipping.country || '',
+        });
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setUserData(u => ({ ...u, [name]: value }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     try {
+      const token = JSON.parse(localStorage.getItem('user'))?.token;
+
+      // Update basic profile (firstName, lastName, email)
       await api.put('/users/me', {
-        name: `${userData.firstName} ${userData.lastName}`,
-        email: userData.email,
-        phone: userData.phone,
-        address: userData.address,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setSuccess('Profile updated');
-      setIsEditing(false);
-    } catch {
-      setError('Update failed');
+
+      // Update shipping address
+      await api.put('/users/shipping-address', {
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        country: formData.country,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert('Update failed. Please try again.');
     }
   };
 
+  if (loading) {
+    return (
+      <Container sx={{ mt: 6, textAlign: 'center' }}>
+        <Typography>Loading Profile...</Typography>
+      </Container>
+    );
+  }
+
   return (
-    <Container maxWidth="md">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-            <Typography variant="h4">My Profile</Typography>
-            <Button variant="contained" onClick={() => setIsEditing(!isEditing)}>
-              {isEditing ? 'Cancel' : 'Edit Profile'}
-            </Button>
-          </Box>
-
-          <Divider sx={{ mb: 3 }} />
-
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="First Name"
-                  name="firstName"
-                  value={userData.firstName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </Grid>
-              <Grid item xs={6}>
-                <TextField
-                  fullWidth
-                  label="Last Name"
-                  name="lastName"
-                  value={userData.lastName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  value={userData.email}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Phone Number"
-                  name="phone"
-                  value={userData.phone}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Address"
-                  name="address"
-                  multiline
-                  rows={2}
-                  value={userData.address}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-              </Grid>
-            </Grid>
-
-            {isEditing && (
-              <Box sx={{ mt: 3, textAlign: 'right' }}>
-                <Button type="submit" variant="contained">
-                  Save Changes
-                </Button>
-              </Box>
-            )}
-          </form>
-        </Paper>
-      </Box>
-
-      <Snackbar
-        open={!!success}
-        autoHideDuration={4000}
-        onClose={() => setSuccess('')}
-        message={success}
-      />
-
-      <Box sx={{ textAlign: 'center', mt: 2 }}>
-        <Button color="error" onClick={logout}>
-          Logout
-        </Button>
-      </Box>
+    <Container maxWidth="sm" sx={{ mt: 6, mb: 6 }}>
+      <Paper sx={{ p: 4 }}>
+        <Typography variant="h4" align="center" gutterBottom>
+          My Profile
+        </Typography>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+          <TextField
+            fullWidth
+            label="First Name"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Last Name"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Email Address"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            margin="normal"
+            required
+            type="email"
+          />
+          <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>
+            Shipping Address
+          </Typography>
+          <TextField
+            fullWidth
+            label="Address"
+            name="address"
+            value={formData.address}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="City"
+            name="city"
+            value={formData.city}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Postal Code"
+            name="postalCode"
+            value={formData.postalCode}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Country"
+            name="country"
+            value={formData.country}
+            onChange={handleChange}
+            margin="normal"
+            required
+          />
+          <Button type="submit" variant="contained" fullWidth sx={{ mt: 3 }}>
+            Update Profile
+          </Button>
+        </Box>
+      </Paper>
     </Container>
   );
 }

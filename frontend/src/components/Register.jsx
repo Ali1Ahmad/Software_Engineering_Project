@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
-  Container,
   Paper,
   Typography,
   TextField,
@@ -13,7 +12,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  IconButton
 } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import api from '../services/api';
 import { AuthContext } from '../context/AuthContext';
 
@@ -32,18 +33,21 @@ export default function Register() {
   const [error, setError] = useState('');
 
   const handleChange = (e) =>
-    setFormData(f => ({ ...f, [e.target.name]: e.target.value }));
+    setFormData((f) => ({ ...f, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     const { firstName, lastName, email, password, confirmPassword } = formData;
+
     if (!firstName || !lastName || !email || !password) {
       return setError('All fields are required');
     }
+
     if (password !== confirmPassword) {
       return setError('Passwords do not match');
     }
+
     try {
       const { data } = await api.post('/auth/register', {
         name: `${firstName} ${lastName}`,
@@ -52,136 +56,148 @@ export default function Register() {
         role
       });
       setSession(data);
-      navigate('/profile');
+      // Redirect based on role
+      if (role === 'customer') {
+        navigate('/products');
+      } else if (role === 'seller') {
+        navigate('/seller/dashboard');
+      } else {
+        navigate('/admin/dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
     }
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Grid container>
-        {/* Left side: form */}
-        <Grid
-          item
-          xs={12}
-          md={6}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: 8,
-          }}
-        >
-          <Container maxWidth="xs">
-            {/* Logo */}
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <img src="/logo.png" alt="Shopfinity" style={{ width: 120 }} />
-            </Box>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        width: '100%',
+        bgcolor: 'background.default',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        px: 2
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          width: '100%',
+          maxWidth: 480,
+          p: { xs: 3, sm: 4 },
+          borderRadius: 2,
+          bgcolor: 'background.paper'
+        }}
+      >
+        {/* Back Button */}
+        <Box sx={{ mb: 2 }}>
+          <IconButton
+            onClick={() => navigate('/login')}
+            sx={{ color: 'text.primary', p: 0 }}
+          >
+            <ArrowBackIcon />
+            <Typography variant="body2" sx={{ ml: 1 }}>
+              Back to Login
+            </Typography>
+          </IconButton>
+        </Box>
 
-            <Paper elevation={2} sx={{ p: 4 }}>
-              <Typography variant="h5" gutterBottom>
-                Create your Shopfinity account
-              </Typography>
-              {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {/* Logo */}
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <img src="/logo.png" alt="Shopfinity" style={{ width: 120 }} />
+        </Box>
 
-              <form onSubmit={handleSubmit}>
-                {/* Role selector */}
-                <FormControl fullWidth margin="normal">
-                  <InputLabel>I am a…</InputLabel>
-                  <Select
-                    value={role}
-                    label="I am a…"
-                    onChange={(e) => setRole(e.target.value)}
-                  >
-                    <MenuItem value="customer">Customer</MenuItem>
-                    <MenuItem value="seller">Seller</MenuItem>
-                    <MenuItem value="admin">Admin</MenuItem>
-                  </Select>
-                </FormControl>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold', textAlign: 'center' }}>
+          Create your Shopfinity account
+        </Typography>
 
-                <Grid container spacing={2}>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="First name"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                  <Grid item xs={6}>
-                    <TextField
-                      fullWidth
-                      label="Last name"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                    />
-                  </Grid>
-                </Grid>
+        {error && <Alert severity="error" sx={{ mt: 2, mb: 2 }}>{error}</Alert>}
 
-                <TextField
-                  fullWidth
-                  label="Email"
-                  name="email"
-                  margin="normal"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-                <TextField
-                  fullWidth
-                  label="Password"
-                  name="password"
-                  type="password"
-                  margin="normal"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                <TextField
-                  fullWidth
-                  label="Re-enter password"
-                  name="confirmPassword"
-                  type="password"
-                  margin="normal"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                />
+        <form onSubmit={handleSubmit}>
+          {/* Role Selector */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel>I am a…</InputLabel>
+            <Select
+              value={role}
+              label="I am a…"
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <MenuItem value="customer">Customer</MenuItem>
+              <MenuItem value="seller">Seller</MenuItem>
+              <MenuItem value="admin">Admin</MenuItem>
+            </Select>
+          </FormControl>
 
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  type="submit"
-                  sx={{ mt: 3, mb: 1 }}
-                >
-                  Continue
-                </Button>
-              </form>
+          {/* Name Fields */}
+          <Grid container spacing={2}>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="First name"
+                name="firstName"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Last name"
+                name="lastName"
+                value={formData.lastName}
+                onChange={handleChange}
+              />
+            </Grid>
+          </Grid>
 
-              <Box sx={{ textAlign: 'center', mt: 2 }}>
-                <Typography variant="body2">
-                  Already have an account? <Link to="/login">Sign-In</Link>
-                </Typography>
-              </Box>
-            </Paper>
-          </Container>
-        </Grid>
+          {/* Email + Password Fields */}
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            margin="normal"
+            value={formData.email}
+            onChange={handleChange}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            name="password"
+            type="password"
+            margin="normal"
+            value={formData.password}
+            onChange={handleChange}
+          />
+          <TextField
+            fullWidth
+            label="Re-enter password"
+            name="confirmPassword"
+            type="password"
+            margin="normal"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+          />
 
-        {/* Right side: hero image */}
-        <Grid
-          item
-          xs={0}
-          md={6}
-          sx={{
-            display: { xs: 'none', md: 'block' },
-            backgroundImage: 'url(/signup_image.jpg)',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            minHeight: '100vh',
-          }}
-        />
-      </Grid>
+          <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            type="submit"
+            sx={{ mt: 3, py: 1.5 }}
+          >
+            Continue
+          </Button>
+        </form>
+
+        {/* Link to Login */}
+        <Box sx={{ textAlign: 'center', mt: 2 }}>
+          <Typography variant="body2">
+            Already have an account? <Link to="/login">Sign-In</Link>
+          </Typography>
+        </Box>
+      </Paper>
     </Box>
   );
 }

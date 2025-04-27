@@ -15,6 +15,8 @@ import Cart from './components/Cart';
 import Checkout from './components/Checkout';
 import OrderConfirmation from './components/OrderConfirmation';
 import MyOrders from './components/MyOrders';
+import OrderDetail from './components/OrderDetail';
+import AdminDashboard from './components/AdminDashboard';
 
 function PrivateRoute({ children }) {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -58,13 +60,23 @@ export default function App() {
               element={<PrivateRoute><MyOrders /></PrivateRoute>}
             />
 
+            <Route
+              path="/myorders/:id"
+              element={<PrivateRoute><OrderDetail /></PrivateRoute>}
+            />
+
+
             {/* Protected Seller */}
             <Route
               path="/seller"
               element={<PrivateRoute><SellerDashboard /></PrivateRoute>}
             />
-
             {/* future: Admin dashboard */}
+            <Route
+              path="/admin"
+              element={<PrivateRoute><AdminDashboard /></PrivateRoute>}
+            />
+
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>

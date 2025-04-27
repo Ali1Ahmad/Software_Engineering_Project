@@ -3,7 +3,7 @@ import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 
 // Protect routes — ensure user is logged in
-export const protect = asyncHandler(async (req, res, next) => {
+const protect = asyncHandler(async (req, res, next) => {
   let token;
   if (
     req.headers.authorization &&
@@ -26,7 +26,7 @@ export const protect = asyncHandler(async (req, res, next) => {
 });
 
 // Authorize based on user role(s)
-export const authorize = (...allowedRoles) => {
+const authorize = (...allowedRoles) => {
   return (req, res, next) => {
     if (!req.user || !allowedRoles.includes(req.user.role)) {
       res.status(403);
@@ -35,3 +35,16 @@ export const authorize = (...allowedRoles) => {
     next();
   };
 };
+
+// Admin only
+const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403);
+    throw new Error('Not authorized as admin');
+  }
+};
+
+// Final Export Correctly
+export { protect, authorize, adminOnly };
