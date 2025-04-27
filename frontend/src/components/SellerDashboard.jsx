@@ -107,6 +107,7 @@ export default function SellerDashboard() {
         setForm((f) => ({ ...f, image: json.secure_url }));
       } else {
         console.error('Cloudinary upload failed', json);
+        console.error('Error details:', json.error);
       }
     } catch (err) {
       console.error('Cloudinary upload error:', err);

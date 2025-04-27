@@ -12,6 +12,8 @@ import productRoutes from './routes/productRoutes.js';
 import sellerProductRoutes from './routes/sellerProductRoutes.js';
 import sellerOrderRoutes from './routes/sellerOrderRoutes.js';
 import orderRoutes from './routes/orderRoutes.js'; 
+import adminRoutes from './routes/adminRoutes.js';
+
 
 connectDB();
 
@@ -31,6 +33,8 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/seller/products', sellerProductRoutes);
 app.use('/api/seller/orders', sellerOrderRoutes);
 app.use('/api/orders', orderRoutes); 
+app.use('/api/admin', adminRoutes);
+
 
 app.get('/', (_req, res) => res.send('API up'));
 

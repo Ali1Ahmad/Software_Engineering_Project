@@ -40,11 +40,19 @@ export default function Cart() {
               <Box key={item.product._id} sx={{ mb: 2 }}>
                 <Grid container alignItems="center" spacing={2}>
                   <Grid item xs={3}>
-                    <img
-                      src={item.product.image}
-                      alt={item.product.name}
-                      style={{ width: '100%' }}
-                    />
+                  <img
+                    src={item.product.image}
+                    alt={item.product.name}
+                    style={{
+                      width: '100%',
+                      maxWidth: '100px',
+                      height: 'auto',
+                      objectFit: 'contain',
+                      display: 'block',
+                      margin: 'auto'
+                    }}
+                  />
+
                   </Grid>
                   <Grid item xs={4}>
                     <Typography>{item.product.name}</Typography>

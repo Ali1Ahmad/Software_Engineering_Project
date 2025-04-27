@@ -25,26 +25,36 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+  
     if (!formData.email || !formData.password) {
       return setError('Please fill in all fields');
     }
+  
     try {
       const { data } = await api.post('/auth/login', formData);
       setSession(data);
-
-      // Redirect based on role
-      if (data.user.role === 'seller') {
-        navigate('/seller', { replace: true });
-      } else if (data.user.role === 'admin') {
+  
+      const role = data.user.role?.toLowerCase();
+  
+      if (role === 'admin') {
         navigate('/admin', { replace: true });
+      } else if (role === 'seller') {
+        if (data.user.isApproved) {
+          navigate('/seller', { replace: true });
+        } else {
+          setError('Your seller account is pending admin approval.');
+        }
+      } else if (role === 'customer' || !role) {
+        navigate('/products', { replace: true });
       } else {
         navigate('/products', { replace: true });
       }
+  
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }
   };
-
+  
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <Container maxWidth="xs" sx={{ py: 8 }}>
